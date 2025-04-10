@@ -1,40 +1,29 @@
 pipeline {
     agent any
+
     environment {
         IMAGE = "jithu145/java-microservice:${env.BRANCH_NAME}"
-        SONARQUBE = 'SonarQube-Server'
     }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
+
         stage('Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
+
         stage('Test') {
             steps {
                 sh 'mvn test'
             }
         }
-        stage('SonarQube Analysis') {
-            when {
-                anyOf {
-                    branch pattern: "feature/.*", comparator: "REGEXP"
-                    branch "develop"
-                    branch pattern: "release/.*", comparator: "REGEXP"
-                    branch "main"
-                }
-            }
-            steps {
-                withSonarQubeEnv("${SONARQUBE}") {
-                    sh 'sonar-scanner'
-                }
-            }
-        }
+
         stage('Docker Build & Push') {
             when {
                 anyOf {
@@ -53,6 +42,7 @@ pipeline {
                 }
             }
         }
+
         stage('Deploy to Staging') {
             when {
                 branch pattern: "release/.*", comparator: "REGEXP"
@@ -65,6 +55,7 @@ pipeline {
                 """
             }
         }
+
         stage('Approval & Deploy to Prod') {
             when {
                 branch 'main'
@@ -79,6 +70,7 @@ pipeline {
             }
         }
     }
+
     post {
         always {
             cleanWs()

@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        IMAGE = "jithu145/java-microservice:${env.BRANCH_NAME}"
-        
+        IMAGE = "docker.io/jithu145/java-microservice:${env.BRANCH_NAME}"
     }
     stages {
         stage('Checkout') {
@@ -37,7 +36,7 @@ pipeline {
                     """
                 }
             }
-        } //
+        }
         stage('Deploy to Staging') {
             when {
                 branch pattern: "release/.*", comparator: "REGEXP"

@@ -1,10 +1,11 @@
 pipeline {
     agent any
-
     environment {
-        IMAGE = "jithu145/java-microservice:${env.BRANCH_NAME}"
-    }
+    IMAGE = "docker.io/jithu145/java-microservice:${env.BRANCH_NAME.replaceAll('/', '-')}"
+    KUBECONFIG_PATH = "/var/lib/jenkins/.kube/config"
+}
 
+        
     stages {
         stage('Checkout') {
             steps {
@@ -34,25 +35,25 @@ pipeline {
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'fb16b1ba-d2e9-41bb-8654-d00d3b5b61e6', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
+                    sh '''
                         docker build -t ${IMAGE} .
                         echo "${PASS}" | docker login -u "${USER}" --password-stdin
                         docker push ${IMAGE}
-                    """
+                    '''
                 }
             }
-        } // <-- 🔧 this closing brace was missing
+        }
 
         stage('Deploy to Staging') {
             when {
                 branch pattern: "release/.*", comparator: "REGEXP"
             }
             steps {
-                sh """
+                sh '''
                     sed -i 's|IMAGE_PLACEHOLDER|${IMAGE}|' k8s/deployment.yaml
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                """
+                    kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f k8s/deployment.yaml
+                    kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f k8s/service.yaml
+                '''
             }
         }
 
@@ -62,11 +63,11 @@ pipeline {
             }
             steps {
                 input message: "Deploy to Production?"
-                sh """
+                sh '''
                     sed -i 's|IMAGE_PLACEHOLDER|${IMAGE}|' k8s/deployment.yaml
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                """
+                    kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f k8s/deployment.yaml
+                    kubectl --kubeconfig=${KUBECONFIG_PATH} apply -f k8s/service.yaml
+                '''
             }
         }
     }

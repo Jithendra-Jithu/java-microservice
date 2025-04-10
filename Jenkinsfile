@@ -1,7 +1,8 @@
 pipeline {
     agent any
     environment {
-        IMAGE = "docker.io/jithu145/java-microservice:${env.BRANCH_NAME}"
+        IMAGE = "docker.io/jithu145/java-microservice:${env.BRANCH_NAME.replaceAll('/', '-')}"
+
     }
     stages {
         stage('Checkout') {

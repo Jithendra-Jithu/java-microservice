@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        IMAGE = "docker.io/jithu145/java-microservice:${env.BRANCH_NAME.replaceAll('/', '-')}"
-
+        SAFE_BRANCH = "${env.BRANCH_NAME.replaceAll('/', '-')}"
+        IMAGE = "docker.io/jithu145/java-microservice:${SAFE_BRANCH}"
     }
     stages {
         stage('Checkout') {
@@ -23,18 +23,18 @@ pipeline {
         stage('Docker Build & Push') {
             when {
                 anyOf {
-                    branch "develop"
+                    branch 'develop'
                     branch pattern: "release/.*", comparator: "REGEXP"
-                    branch "main"
+                    branch 'main'
                 }
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'fb16b1ba-d2e9-41bb-8654-d00d3b5b61e6', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                        docker build -t ${IMAGE} .
-                        echo "${PASS}" | docker login -u "${USER}" --password-stdin
-                        docker push ${IMAGE}
-                    """
+                    sh '''
+                        docker build -t "$IMAGE" .
+                        echo "$PASS" | docker login -u "$USER" --password-stdin
+                        docker push "$IMAGE"
+                    '''
                 }
             }
         }
@@ -43,30 +43,8 @@ pipeline {
                 branch pattern: "release/.*", comparator: "REGEXP"
             }
             steps {
-                sh """
-                    sed -i 's|IMAGE_PLACEHOLDER|${IMAGE}|' k8s/deployment.yaml
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                """
-            }
-        }
-        stage('Approval & Deploy to Prod') {
-            when {
-                branch 'main'
-            }
-            steps {
-                input message: "Deploy to Production?"
-                sh """
-                    sed -i 's|IMAGE_PLACEHOLDER|${IMAGE}|' k8s/deployment.yaml
-                    kubectl apply -f k8s/deployment.yaml
-                    kubectl apply -f k8s/service.yaml
-                """
-            }
-        }
-    }
-    post {
-        always {
-            cleanWs()
-        }
-    }
-}
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONF')]) {
+                    sh '''
+                        sed -i "s|IMAGE_PLACEHOLDER|$IMAGE|" k8s/deployment.yaml
+                        export KUBECONFIG=$KUBECONF
+                        kubectl apply -f k8

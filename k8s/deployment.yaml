@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-microservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-microservice
+  template:
+    metadata:
+      labels:
+        app: java-microservice
+    spec:
+      containers:
+      - name: java-microservice
+        image: IMAGE_PLACEHOLDER
+        ports:
+        - containerPort: 8080

@@ -2,7 +2,7 @@ pipeline {
     agent any
     environment {
         IMAGE = "docker.io/jithu145/java-microservice:${env.BRANCH_NAME.replaceAll('/', '-')}"
-        KUBECONFIG_PATH = "/home/master/.kube/config" // Change this to your actual path
+        KUBECONFIG_PATH = ""/var/lib/jenkins/.kube/config"" // Change this to your actual path
     }
     stages {
         stage('Checkout') {

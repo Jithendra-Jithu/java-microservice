@@ -33,15 +33,16 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'fb16b1ba-d2e9-41bb-8654-d00d3b5b61e6', usernameVariable: '$USER', passwordVariable: '$PASS')]) {
-                    sh """
-                        docker build -t ${IMAGE} .
-                        echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker push ${IMAGE}
-                    """
-                }
-            }
-        }
+    withCredentials([usernamePassword(credentialsId: 'fb16b1ba-d2e9-41bb-8654-d00d3b5b61e6', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+        sh """
+            docker build -t ${IMAGE} .
+            echo "${PASS}" | docker login -u "${USER}" --password-stdin
+            docker push ${IMAGE}
+        """
+    }
+}
+
+        
 
         stage('Deploy to Staging') {
             when {
